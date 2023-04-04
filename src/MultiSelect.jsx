@@ -169,7 +169,10 @@ export default function MultiSelect({ data }) {
       } else if (event.key === 'ArrowUp' && focusedIndex > -1) {
         event.preventDefault()
         setFocusedIndex(focusedIndex - 1)
-      } else if (event.key === ' ' || event.key === 'Enter') {
+      } else if (
+        focusedIndex >= 0 &&
+        (event.key === ' ' || event.key === 'Enter')
+      ) {
         event.preventDefault()
         const option = options[focusedIndex]
         handleOptionSelect(option.name, !option.checked)()
