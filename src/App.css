@@ -48,7 +48,9 @@
 }
 
 .option-box-container-outer.group:not(:first-child, .hidden) hr {
+  border-top: 1px solid #fefefe;
   display: block;
+  margin-bottom: 10px;
 }
 
 .option-box-container-outer.group.single-group hr {
