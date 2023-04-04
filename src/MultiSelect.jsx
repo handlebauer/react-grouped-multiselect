@@ -62,9 +62,15 @@ function Option({
     disabled && 'disabled'
   )
 
+  const optionBoxContainerOuterClasses = clsx(
+    'option-box-container-outer',
+    level === 0 && 'group',
+    !visible && 'hidden'
+  )
+
   return (
-    <div className="option-box-container-outer">
-      {level === 0 && <hr />}
+    <div className={optionBoxContainerOuterClasses}>
+      <hr />
       <div
         className={optionBoxContainerClasses}
         onClick={handleClick(name, !checked)}

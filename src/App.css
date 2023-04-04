@@ -43,11 +43,12 @@
   opacity: 1;
 }
 
-.option-box-container-outer:first-child hr {
+.option-box-container-outer hr {
   display: none;
 }
 
-.option-box-container-outer hr {
+.option-box-container-outer.group:not(:first-child, .hidden) hr {
+  display: block;
   border-top: 1px solid #fefefe;
   margin-bottom: 10px;
 }
@@ -101,6 +102,7 @@
   user-select: none;
   color: #3086ff;
   visibility: hidden;
+  transform: translate(0, 2px);
 }
 
 .option-box-container.selected .check-container,
@@ -110,5 +112,5 @@
 
 .check-container.partial {
   color: #5a99f6;
-  transform: translate(3px, -2px);
+  transform: translate(3px, -1px);
 }
