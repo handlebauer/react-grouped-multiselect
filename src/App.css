@@ -77,6 +77,10 @@
   background: rgba(0, 0, 0, 0);
 }
 
+.option-box-container:focus {
+  outline: 1px solid #4096ff;
+}
+
 .option-box-container:hover {
   background: #f5f5f5;
 }

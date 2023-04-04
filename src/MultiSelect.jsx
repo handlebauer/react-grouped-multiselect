@@ -6,45 +6,11 @@ import { shallowEqualSortedArrays } from '@hbauer/convenience-functions'
 
 import { flatten } from './flatten.js'
 
-function Check() {
-  return (
-    <span className="check-container">
-      <span className="check">
-        <svg
-          viewBox="64 64 896 896"
-          focusable="false"
-          data-icon="check"
-          width="1em"
-          height="1em"
-          fill="currentColor"
-          aria-hidden="true"
-        >
-          <path d="M912 190h-69.9c-9.8 0-19.1 4.5-25.1 12.2L404.7 724.5 207 474a32 32 0 00-25.1-12.2H112c-6.7 0-10.4 7.7-6.3 12.9l273.9 347c12.8 16.2 37.4 16.2 50.3 0l488.4-618.9c4.1-5.1.4-12.8-6.3-12.8z"></path>
-        </svg>
-      </span>
-    </span>
-  )
-}
-
-function PartialCheck({ colour }) {
-  return (
-    <span className="check-container partial">
-      <span className="check">
-        <svg
-          viewBox="0 0 100 100"
-          width="0.5em"
-          height="0.5em"
-          fill="currentColor"
-          aria-hidden="true"
-        >
-          <circle cx="50" cy="50" r="50" />
-        </svg>{' '}
-      </span>
-    </span>
-  )
-}
+import Circle from './Circle.jsx'
+import Check from './Check.jsx'
 
 function Option({
+  index,
   name,
   level,
   visibleSportsLength,
@@ -53,6 +19,7 @@ function Option({
   visible,
   disabled,
   handleClick,
+  optionBoxContainerRefs,
 }) {
   const optionBoxContainerClasses = clsx(
     'option-box-container',
@@ -75,7 +42,11 @@ function Option({
       <hr />
       <div
         className={optionBoxContainerClasses}
+        tabIndex={index}
         onClick={handleClick(name, !checked)}
+        ref={element => {
+          return (optionBoxContainerRefs.current[index] = element)
+        }}
       >
         <label
           className="option-control"
@@ -84,7 +55,7 @@ function Option({
         >
           {name}
         </label>
-        {partial ? <PartialCheck /> : <Check />}
+        {partial ? <Circle /> : <Check />}
       </div>
     </div>
   )
@@ -95,7 +66,11 @@ export default function MultiSelect({ data }) {
 
   const [isOpen, setIsOpen] = useState(true)
   const [options, setOptions] = useState(flattenedData)
-  const optionsContainerRef = useRef()
+  const [searchValue, setSearchValue] = useState('')
+  const [focusedIndex, setFocusedIndex] = useState(0)
+  const searchRef = useRef(null)
+  const optionsContainerRef = useRef(null)
+  const optionBoxContainerRefs = useRef(new Array(options.length).fill(null))
 
   const handleMouseDown = event => {
     const isInteractionOutside =
@@ -106,32 +81,7 @@ export default function MultiSelect({ data }) {
     }
   }
 
-  const handleKeyDown = event => {
-    event.preventDefault()
-    // if (event.key === 'ArrowDown') {
-    // event.preventDefault()
-    //   focusNextOption()
-    // } else if (event.key === 'ArrowUp') {
-    //   event.preventDefault()
-    //   focusPrevOption()
-    // } else if (event.key === ' ') {
-    //   event.preventDefault()
-    //   toggleFocusedOption()
-    // } else if (event.key === 'Enter') {
-    //   event.preventDefault()
-    //   toggleFocusedOption()
-    // }
-  }
-
-  useEffect(() => {
-    optionsContainerRef.current.addEventListener('keydown', handleKeyDown)
-    document.addEventListener('mousedown', handleMouseDown)
-    return () => {
-      document.removeEventListener('mousedown', handleMouseDown)
-    }
-  }, [optionsContainerRef])
-
-  const handleOptionClick = (name, wasChecked) => _ => {
+  const handleOptionSelect = (name, wasChecked) => _ => {
     const selected = options.find(opt => opt.name === name)
 
     const targetIndexes = [selected.index]
@@ -208,66 +158,43 @@ export default function MultiSelect({ data }) {
     )
   }
 
-  // const handleOptionChange = event => {
-  //   const { value: name, checked } = event.target
+  useEffect(() => {
+    const handleKeyDown = event => {
+      if (
+        (event.key === 'ArrowDown' || event.key === 'Tab') &&
+        focusedIndex < options.length - 1
+      ) {
+        event.preventDefault()
+        setFocusedIndex(focusedIndex + 1)
+      } else if (event.key === 'ArrowUp' && focusedIndex > -1) {
+        event.preventDefault()
+        setFocusedIndex(focusedIndex - 1)
+      } else if (event.key === ' ' || event.key === 'Enter') {
+        event.preventDefault()
+        const option = options[focusedIndex]
+        handleOptionSelect(option.name, !option.checked)()
+      } else if (event.key.match(/^[a-zA-Z0-9]$/)) {
+        setFocusedIndex(-1)
+      }
+    }
 
-  //   const selected = options.find(opt => opt.name === name)
+    if (focusedIndex === -1) {
+      searchRef.current.focus()
+    } else {
+      const currentOptionBoxContainerRef =
+        optionBoxContainerRefs.current[focusedIndex]
+      if (currentOptionBoxContainerRef) {
+        currentOptionBoxContainerRef.focus()
+      }
+    }
 
-  //   const targetIndexes = [selected.index]
-
-  //   if (checked === true) {
-  //     function findParentIndexes(current, indexes = []) {
-  //       if (current.parents.length === 0) {
-  //         return indexes
-  //       }
-
-  //       const directSiblingsChecked = options
-  //         .filter(
-  //           opt =>
-  //             opt.name !== current.name &&
-  //             opt.level === current.level &&
-  //             shallowEqualSortedArrays(opt.parents, current.parents)
-  //         )
-  //         .every(sibling => sibling.checked)
-
-  //       const allSiblingsChecked = options
-  //         .filter(
-  //           opt =>
-  //             opt.name !== current.name &&
-  //             opt.level === current.level &&
-  //             current.parents.at(0) === opt.parents.at(0)
-  //         )
-  //         .every(sibling => sibling.checked)
-
-  //       if (directSiblingsChecked || allSiblingsChecked) {
-  //         const parentName = current.parents.at(-1)
-  //         const parent = options.find(opt => opt.name === parentName)
-  //         return findParentIndexes(parent, [parent.index, ...indexes])
-  //       }
-
-  //       return indexes
-  //     }
-
-  //     targetIndexes.push(...findParentIndexes(selected))
-  //   } else {
-  //     const parentIndexes = options
-  //       .filter(opt => selected.parents.includes(opt.name))
-  //       .map(opt => opt.index)
-  //     targetIndexes.push(...parentIndexes)
-  //   }
-
-  //   const descendentIndexes = options
-  //     .filter(opt => opt.parents.includes(selected.name))
-  //     .map(opt => opt.index)
-
-  //   targetIndexes.push(...descendentIndexes)
-
-  //   setOptions(
-  //     produce(draft =>
-  //       targetIndexes.forEach(index => (draft[index].checked = checked))
-  //     )
-  //   )
-  // }
+    document.addEventListener('mousedown', handleMouseDown)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handleMouseDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [focusedIndex, optionBoxContainerRefs, handleOptionSelect, searchRef])
 
   const handleSearchChange = event => {
     const value = event.target.value.toLowerCase().trim()
@@ -327,7 +254,12 @@ export default function MultiSelect({ data }) {
         className="select-box"
         onChange={handleSearchChange}
         placeholder="Search sports/leagues/teams"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={event => {
+          setFocusedIndex(-1)
+          setIsOpen(true)
+        }}
+        tabIndex="-1"
+        ref={searchRef}
       />
       <div
         ref={optionsContainerRef}
@@ -338,8 +270,9 @@ export default function MultiSelect({ data }) {
             <Option
               key={item.index}
               {...item}
+              optionBoxContainerRefs={optionBoxContainerRefs}
               visibleSportsLength={visibleSportsLength}
-              handleClick={handleOptionClick}
+              handleClick={handleOptionSelect}
             />
           ))
         ) : (
