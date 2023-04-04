@@ -8,7 +8,13 @@
 .grouped-multi-select {
   display: flex;
   flex-direction: column;
-  width: 300px;
+  width: 100vw;
+}
+
+@media (min-width: 768px) {
+  .grouped-multi-select {
+    width: 300px;
+  }
 }
 
 .select-box {

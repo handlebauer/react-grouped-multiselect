@@ -66,7 +66,6 @@ export default function MultiSelect({ data }) {
 
   const [isOpen, setIsOpen] = useState(true)
   const [options, setOptions] = useState(flattenedData)
-  const [searchValue, setSearchValue] = useState('')
   const [focusedIndex, setFocusedIndex] = useState(0)
   const searchRef = useRef(null)
   const optionsContainerRef = useRef(null)
@@ -156,6 +155,7 @@ export default function MultiSelect({ data }) {
         })
       })
     )
+    setFocusedIndex(selected.index)
   }
 
   useEffect(() => {
