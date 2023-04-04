@@ -47,6 +47,7 @@ function PartialCheck({ colour }) {
 function Option({
   name,
   level,
+  visibleSportsLength,
   checked,
   partial,
   visible,
@@ -65,7 +66,8 @@ function Option({
   const optionBoxContainerOuterClasses = clsx(
     'option-box-container-outer',
     level === 0 && 'group',
-    !visible && 'hidden'
+    !visible && 'hidden',
+    visibleSportsLength === 1 && 'single-group'
   )
 
   return (
@@ -314,12 +316,17 @@ export default function MultiSelect({ data }) {
     )
   }
 
+  const visibleSportsLength = options.filter(
+    opt => opt.level === 0 && opt.visible
+  ).length
+
   return (
     <div className="grouped-multi-select">
       <input
         type="search"
         className="select-box"
         onChange={handleSearchChange}
+        placeholder="Search sports/leagues/teams"
         onClick={() => setIsOpen(!isOpen)}
       />
       <div
@@ -329,9 +336,9 @@ export default function MultiSelect({ data }) {
         {options.some(opt => opt.visible) ? (
           options.map(item => (
             <Option
-              key={item.name}
+              key={item.index}
               {...item}
-              // handleChange={handleOptionChange}
+              visibleSportsLength={visibleSportsLength}
               handleClick={handleOptionClick}
             />
           ))
