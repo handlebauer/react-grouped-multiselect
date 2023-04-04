@@ -90,13 +90,16 @@
 .check-container {
   width: 10px;
   user-select: none;
+  color: #3086ff;
   visibility: hidden;
 }
 
-.option-box-container.selected .check-container {
+.option-box-container.selected .check-container,
+.option-box-container.partial .check-container {
   visibility: visible;
-  color: #3086ff;
 }
 
-.option-box-container.disabled .check-container {
+.check-container.partial {
+  color: #5a99f6;
+  transform: translate(3px, -2px);
 }

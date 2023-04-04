@@ -28,28 +28,36 @@ function Check() {
 
 function PartialCheck({ colour }) {
   return (
-    <span className="check-container">
+    <span className="check-container partial">
       <span className="check">
         <svg
-          viewBox="0 0 100 1"
-          focusable="false"
-          width="100%"
-          height="1"
+          viewBox="0 0 100 100"
+          width="0.5em"
+          height="0.5em"
           fill="currentColor"
           aria-hidden="true"
         >
-          <rect x="0" y="0" width="100" height="1" />
-        </svg>
+          <circle cx="50" cy="50" r="50" />
+        </svg>{' '}
       </span>
     </span>
   )
 }
 
-function Option({ name, level, checked, visible, disabled, handleClick }) {
+function Option({
+  name,
+  level,
+  checked,
+  partial,
+  visible,
+  disabled,
+  handleClick,
+}) {
   const optionBoxContainerClasses = clsx(
     'option-box-container',
     level === 0 && 'group',
     checked && 'selected',
+    partial && 'partial',
     !visible && 'hidden',
     disabled && 'disabled'
   )
@@ -73,7 +81,7 @@ function Option({ name, level, checked, visible, disabled, handleClick }) {
       >
         {name}
       </label>
-      <Check />
+      {partial ? <PartialCheck /> : <Check />}
     </div>
   )
 }
@@ -96,7 +104,6 @@ export default function MultiSelect({ data }) {
 
   const handleKeyDown = event => {
     event.preventDefault()
-    console.log('got here')
     // if (event.key === 'ArrowDown') {
     // event.preventDefault()
     //   focusNextOption()
@@ -120,12 +127,13 @@ export default function MultiSelect({ data }) {
     }
   }, [optionsContainerRef])
 
-  const handleOptionClick = (name, checked) => _ => {
+  const handleOptionClick = (name, wasChecked) => _ => {
     const selected = options.find(opt => opt.name === name)
 
     const targetIndexes = [selected.index]
+    const targetPartialIndexes = []
 
-    if (checked === true) {
+    if (wasChecked === true) {
       function findParentIndexes(current, indexes = []) {
         if (current.parents.length === 0) {
           return indexes
@@ -140,16 +148,17 @@ export default function MultiSelect({ data }) {
           )
           .every(sibling => sibling.checked)
 
-        const allSiblingsChecked = options
-          .filter(
-            opt =>
-              opt.name !== current.name &&
-              opt.level === current.level &&
-              current.parents.at(0) === opt.parents.at(0)
-          )
-          .every(sibling => sibling.checked)
+        // const allSiblingsChecked = options
+        //   .filter(
+        //     opt =>
+        //       opt.name !== current.name &&
+        //       opt.level === current.level &&
+        //       current.parents.at(0) === opt.parents.at(0)
+        //   )
+        //   .every(sibling => sibling.checked)
 
-        if (directSiblingsChecked || allSiblingsChecked) {
+        if (directSiblingsChecked) {
+          // if (directSiblingsChecked || allSiblingsChecked) {
           const parentName = current.parents.at(-1)
           const parent = options.find(opt => opt.name === parentName)
           return findParentIndexes(parent, [parent.index, ...indexes])
@@ -160,67 +169,16 @@ export default function MultiSelect({ data }) {
 
       targetIndexes.push(...findParentIndexes(selected))
     } else {
-      const parentIndexes = options
-        .filter(opt => selected.parents.includes(opt.name))
-        .map(opt => opt.index)
-      targetIndexes.push(...parentIndexes)
-    }
-
-    const descendentIndexes = options
-      .filter(opt => opt.parents.includes(selected.name))
-      .map(opt => opt.index)
-
-    targetIndexes.push(...descendentIndexes)
-
-    setOptions(
-      produce(draft =>
-        targetIndexes.forEach(index => (draft[index].checked = checked))
-      )
-    )
-  }
-
-  const handleOptionChange = event => {
-    const { value: name, checked } = event.target
-
-    const selected = options.find(opt => opt.name === name)
-
-    const targetIndexes = [selected.index]
-
-    if (checked === true) {
-      function findParentIndexes(current, indexes = []) {
+      function getParentIndexes(current, indexes = []) {
         if (current.parents.length === 0) {
           return indexes
         }
-
-        const directSiblingsChecked = options
-          .filter(
-            opt =>
-              opt.name !== current.name &&
-              opt.level === current.level &&
-              shallowEqualSortedArrays(opt.parents, current.parents)
-          )
-          .every(sibling => sibling.checked)
-
-        const allSiblingsChecked = options
-          .filter(
-            opt =>
-              opt.name !== current.name &&
-              opt.level === current.level &&
-              current.parents.at(0) === opt.parents.at(0)
-          )
-          .every(sibling => sibling.checked)
-
-        if (directSiblingsChecked || allSiblingsChecked) {
-          const parentName = current.parents.at(-1)
-          const parent = options.find(opt => opt.name === parentName)
-          return findParentIndexes(parent, [parent.index, ...indexes])
-        }
-
-        return indexes
+        const parentName = current.parents.at(-1)
+        const parent = options.find(opt => opt.name === parentName)
+        return [parent.index, ...getParentIndexes(parent, indexes)]
       }
+      targetPartialIndexes.push(...getParentIndexes(selected))
 
-      targetIndexes.push(...findParentIndexes(selected))
-    } else {
       const parentIndexes = options
         .filter(opt => selected.parents.includes(opt.name))
         .map(opt => opt.index)
@@ -234,11 +192,78 @@ export default function MultiSelect({ data }) {
     targetIndexes.push(...descendentIndexes)
 
     setOptions(
-      produce(draft =>
-        targetIndexes.forEach(index => (draft[index].checked = checked))
-      )
+      produce(draft => {
+        targetIndexes.forEach(index => {
+          draft[index].checked = wasChecked
+          draft[index].partial = false
+        })
+        targetPartialIndexes.forEach(index => {
+          draft[index].partial = true
+        })
+      })
     )
   }
+
+  // const handleOptionChange = event => {
+  //   const { value: name, checked } = event.target
+
+  //   const selected = options.find(opt => opt.name === name)
+
+  //   const targetIndexes = [selected.index]
+
+  //   if (checked === true) {
+  //     function findParentIndexes(current, indexes = []) {
+  //       if (current.parents.length === 0) {
+  //         return indexes
+  //       }
+
+  //       const directSiblingsChecked = options
+  //         .filter(
+  //           opt =>
+  //             opt.name !== current.name &&
+  //             opt.level === current.level &&
+  //             shallowEqualSortedArrays(opt.parents, current.parents)
+  //         )
+  //         .every(sibling => sibling.checked)
+
+  //       const allSiblingsChecked = options
+  //         .filter(
+  //           opt =>
+  //             opt.name !== current.name &&
+  //             opt.level === current.level &&
+  //             current.parents.at(0) === opt.parents.at(0)
+  //         )
+  //         .every(sibling => sibling.checked)
+
+  //       if (directSiblingsChecked || allSiblingsChecked) {
+  //         const parentName = current.parents.at(-1)
+  //         const parent = options.find(opt => opt.name === parentName)
+  //         return findParentIndexes(parent, [parent.index, ...indexes])
+  //       }
+
+  //       return indexes
+  //     }
+
+  //     targetIndexes.push(...findParentIndexes(selected))
+  //   } else {
+  //     const parentIndexes = options
+  //       .filter(opt => selected.parents.includes(opt.name))
+  //       .map(opt => opt.index)
+  //     targetIndexes.push(...parentIndexes)
+  //   }
+
+  //   const descendentIndexes = options
+  //     .filter(opt => opt.parents.includes(selected.name))
+  //     .map(opt => opt.index)
+
+  //   targetIndexes.push(...descendentIndexes)
+
+  //   setOptions(
+  //     produce(draft =>
+  //       targetIndexes.forEach(index => (draft[index].checked = checked))
+  //     )
+  //   )
+  // }
 
   const handleSearchChange = event => {
     const value = event.target.value.toLowerCase().trim()
@@ -304,7 +329,7 @@ export default function MultiSelect({ data }) {
             <Option
               key={item.name}
               {...item}
-              handleChange={handleOptionChange}
+              // handleChange={handleOptionChange}
               handleClick={handleOptionClick}
             />
           ))

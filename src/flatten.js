@@ -31,6 +31,7 @@ export const flatten = (options, parent = null) =>
       checked: true,
       parents: parent ? [...parent.parents, parent.name] : [],
       level: parent ? parent.level + 1 : 0,
+      partial: false,
       visible: true,
       disabled: false,
     }
