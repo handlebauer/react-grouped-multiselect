@@ -43,6 +43,14 @@
   opacity: 1;
 }
 
+.option-box-container-outer:first-child hr {
+  display: none;
+}
+
+.option-box-container-outer hr {
+  border-top: 1px solid #fefefe;
+}
+
 .option-box-container {
   cursor: pointer;
   user-select: none;

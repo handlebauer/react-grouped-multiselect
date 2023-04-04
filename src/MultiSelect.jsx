@@ -63,25 +63,21 @@ function Option({
   )
 
   return (
-    <div
-      className={optionBoxContainerClasses}
-      onClick={handleClick(name, !checked)}
-    >
-      {/* <input
-        type="checkbox"
-        checked={checked}
-        className="option-box"
-        value={name}
-        onChange={handleChange}
-      /> */}
-      <label
-        className="option-control"
-        htmlFor={name}
-        style={{ marginLeft: `${level === 0 ? '8px' : level * 20}px` }}
+    <div className="option-box-container-outer">
+      {level === 0 && <hr />}
+      <div
+        className={optionBoxContainerClasses}
+        onClick={handleClick(name, !checked)}
       >
-        {name}
-      </label>
-      {partial ? <PartialCheck /> : <Check />}
+        <label
+          className="option-control"
+          htmlFor={name}
+          style={{ marginLeft: `${level === 0 ? '8px' : level * 20}px` }}
+        >
+          {name}
+        </label>
+        {partial ? <PartialCheck /> : <Check />}
+      </div>
     </div>
   )
 }
